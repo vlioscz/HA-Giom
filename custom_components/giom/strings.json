@@ -1,0 +1,121 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your GIOM weather station",
+        "description": "Enter the address of the weather station on your network. Home Assistant reads it over HTTP; SNMP is detected automatically and adds two extra readings when available.",
+        "data": {
+          "host": "Host",
+          "community": "SNMP community"
+        },
+        "data_description": {
+          "host": "IP address or hostname, for example 192.168.0.100. IPv6 goes in square brackets.",
+          "community": "Leave as 'public' unless you changed it in the station's own configuration page."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the station. Check the address and that its web interface is on port 80.",
+      "invalid_response": "The address responded, but not with a GIOM status.xml. Make sure this is a GIOM weather station."
+    },
+    "abort": {
+      "already_configured": "This station is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "GIOM options",
+        "data": {
+          "scan_interval": "Polling interval",
+          "use_snmp": "Read extra values over SNMP",
+          "community": "SNMP community"
+        },
+        "data_description": {
+          "scan_interval": "How often to read the station, in seconds.",
+          "use_snmp": "Adds average wind speed and absolute pressure, which status.xml does not carry. Requires SNMP to be enabled on the station.",
+          "community": "Only used when SNMP is switched on."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "dewpoint": {
+        "name": "Dew point"
+      },
+      "windchill": {
+        "name": "Wind chill"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "absolute_humidity": {
+        "name": "Absolute humidity"
+      },
+      "pressure": {
+        "name": "Pressure"
+      },
+      "pressure_absolute": {
+        "name": "Absolute pressure"
+      },
+      "wind_speed": {
+        "name": "Wind speed"
+      },
+      "wind_speed_average": {
+        "name": "Average wind speed"
+      },
+      "wind_gust": {
+        "name": "Wind gust"
+      },
+      "wind_bearing": {
+        "name": "Wind bearing"
+      },
+      "beaufort": {
+        "name": "Beaufort force"
+      },
+      "barometric_altitude": {
+        "name": "Barometric altitude"
+      },
+      "system_temperature": {
+        "name": "Electronics temperature"
+      },
+      "wind_direction": {
+        "name": "Wind direction",
+        "state": {
+          "n": "N",
+          "nne": "NNE",
+          "ne": "NE",
+          "ene": "ENE",
+          "e": "E",
+          "ese": "ESE",
+          "se": "SE",
+          "sse": "SSE",
+          "s": "S",
+          "ssw": "SSW",
+          "sw": "SW",
+          "wsw": "WSW",
+          "w": "W",
+          "wnw": "WNW",
+          "nw": "NW",
+          "nnw": "NNW"
+        }
+      },
+      "irradiance": {
+        "name": "Sunlight intensity"
+      },
+      "uv_factor": {
+        "name": "UV factor"
+      },
+      "lightning_distance": {
+        "name": "Lightning distance"
+      },
+      "lightning_energy": {
+        "name": "Lightning energy"
+      }
+    }
+  }
+}

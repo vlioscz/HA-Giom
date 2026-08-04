@@ -1,0 +1,161 @@
+# =============================================================================
+# GIOM weather station - YAML package (alternative to the custom integration)
+# =============================================================================
+#
+# Prefer the HACS integration. This file exists for people who would rather
+# not add a custom component, and as a reference for what the station exposes.
+#
+# Setup:
+#   1. configuration.yaml needs:
+#        homeassistant:
+#          packages: !include_dir_named packages
+#   2. Drop this file into config/packages/
+#   3. Add the station address to config/secrets.yaml:
+#        giom_status_url: "http://<station-ip>/status.xml"
+#        giom_host: "<station-ip>"
+#        giom_community: "public"
+#
+# The address lives in secrets.yaml on purpose, so it never ends up in a
+# config backup or a repository.
+#
+# Verified against a GIOM 3000AE, firmware 1.0.3.
+# =============================================================================
+
+rest:
+  - resource: !secret giom_status_url
+    scan_interval: 30
+    timeout: 10
+    sensor:
+      - name: "GIOM Temperature"
+        unique_id: giom_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        value_template: "{{ value_json.status.temperature | float(0) }}"
+
+      - name: "GIOM Dew point"
+        unique_id: giom_dewpoint
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        value_template: "{{ value_json.status.dewpoint | float(0) }}"
+
+      - name: "GIOM Wind chill"
+        unique_id: giom_windchill
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        value_template: "{{ value_json.status.windchill | float(0) }}"
+
+      - name: "GIOM Electronics temperature"
+        unique_id: giom_systemp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        entity_category: diagnostic
+        value_template: "{{ value_json.status.systemp | float(0) }}"
+
+      - name: "GIOM Humidity"
+        unique_id: giom_humidity
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        value_template: "{{ value_json.status.relhumidity | float(0) }}"
+
+      - name: "GIOM Absolute humidity"
+        unique_id: giom_abs_humidity
+        unit_of_measurement: "g/m³"
+        state_class: measurement
+        icon: mdi:water-percent
+        value_template: "{{ value_json.status.abshumidity | float(0) }}"
+
+      # Relative (QNH), recomputed by the station for the altitude configured
+      # in its own web UI. The absolute reading is SNMP-only, see below.
+      - name: "GIOM Pressure"
+        unique_id: giom_pressure
+        unit_of_measurement: "hPa"
+        device_class: atmospheric_pressure
+        state_class: measurement
+        value_template: "{{ value_json.status.pressure | float(0) }}"
+
+      # Derived from measured pressure against a standard atmosphere, so it
+      # drifts with the weather. Not the configured altitude.
+      - name: "GIOM Barometric altitude"
+        unique_id: giom_bar_altitude
+        unit_of_measurement: "m"
+        device_class: distance
+        state_class: measurement
+        entity_category: diagnostic
+        value_template: "{{ value_json.status.baraltitude | float(0) }}"
+
+      - name: "GIOM Wind speed"
+        unique_id: giom_wind_speed
+        unit_of_measurement: "m/s"
+        device_class: wind_speed
+        state_class: measurement
+        value_template: "{{ value_json.status.windspeed | float(0) }}"
+
+      # Maximum since the previous read, not a rolling window.
+      - name: "GIOM Wind gust"
+        unique_id: giom_wind_gust
+        unit_of_measurement: "m/s"
+        device_class: wind_speed
+        state_class: measurement
+        value_template: "{{ value_json.status.windgust | float(0) }}"
+
+      # winddir is an index 0..15 on a 16-point rose, not a bearing.
+      # Verified against the station's own degree reading: index 3 -> 67.5.
+      - name: "GIOM Wind bearing"
+        unique_id: giom_wind_bearing
+        unit_of_measurement: "°"
+        state_class: measurement
+        icon: mdi:compass-outline
+        value_template: "{{ (value_json.status.winddir | float(0) * 22.5) | round(1) }}"
+
+template:
+  - sensor:
+      - name: "GIOM Wind direction"
+        unique_id: giom_wind_direction
+        icon: mdi:compass-rose
+        availability: "{{ has_value('sensor.giom_wind_bearing') }}"
+        state: >-
+          {% set d = states('sensor.giom_wind_bearing') | float(0) %}
+          {% set points = ['N','NNE','NE','ENE','E','ESE','SE','SSE',
+                           'S','SSW','SW','WSW','W','WNW','NW','NNW'] %}
+          {{ points[(((d + 11.25) % 360) / 22.5) | int] }}
+
+# =============================================================================
+# SNMP - the two readings status.xml does not carry
+# =============================================================================
+# Delete this section if you do not need them; everything above works without.
+#
+# The leading zero in baseoid is not a typo. This hardware answers only on
+# 0.1.3.6.1.4.1.21287...; the plain form returns noSuchName.
+
+sensor:
+  - platform: snmp
+    name: "GIOM Average wind speed"
+    unique_id: giom_wind_speed_average
+    host: !secret giom_host
+    port: 161
+    community: !secret giom_community
+    version: "1"
+    baseoid: 0.1.3.6.1.4.1.21287.15.6.0
+    scan_interval: 30
+    unit_of_measurement: "m/s"
+    device_class: wind_speed
+    state_class: measurement
+    value_template: "{{ value | float(0) }}"
+
+  - platform: snmp
+    name: "GIOM Absolute pressure"
+    unique_id: giom_pressure_absolute
+    host: !secret giom_host
+    community: !secret giom_community
+    version: "1"
+    baseoid: 0.1.3.6.1.4.1.21287.15.2.0
+    scan_interval: 60
+    unit_of_measurement: "hPa"
+    device_class: atmospheric_pressure
+    state_class: measurement
+    value_template: "{{ value | float(0) }}"

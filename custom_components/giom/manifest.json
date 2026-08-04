@@ -1,0 +1,12 @@
+{
+  "domain": "giom",
+  "name": "GIOM weather station",
+  "codeowners": ["@vlioscz"],
+  "config_flow": true,
+  "documentation": "https://github.com/vlioscz/HA-Giom",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/vlioscz/HA-Giom/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

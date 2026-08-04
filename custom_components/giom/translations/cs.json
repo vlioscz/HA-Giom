@@ -1,0 +1,121 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Připojení meteostanice GIOM",
+        "description": "Zadej adresu meteostanice v tvé síti. Home Assistant ji čte přes HTTP; SNMP se rozpozná samo a přidá dvě veličiny navíc, pokud je stanice nabízí.",
+        "data": {
+          "host": "Adresa",
+          "community": "SNMP community"
+        },
+        "data_description": {
+          "host": "IP adresa nebo hostname, například 192.168.0.100. IPv6 patří do hranatých závorek.",
+          "community": "Nech „public“, pokud sis ji ve stanici nezměnil."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Stanice neodpovídá. Zkontroluj adresu a že její web běží na portu 80.",
+      "invalid_response": "Adresa odpověděla, ale ne souborem status.xml. Ověř, že jde opravdu o meteostanici GIOM."
+    },
+    "abort": {
+      "already_configured": "Tahle stanice už je nastavená."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nastavení GIOM",
+        "data": {
+          "scan_interval": "Interval dotazování",
+          "use_snmp": "Číst veličiny navíc přes SNMP",
+          "community": "SNMP community"
+        },
+        "data_description": {
+          "scan_interval": "Jak často stanici číst, v sekundách.",
+          "use_snmp": "Přidá průměrnou rychlost větru a absolutní tlak, které status.xml nemá. Vyžaduje zapnuté SNMP ve stanici.",
+          "community": "Použije se jen při zapnutém SNMP."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Teplota"
+      },
+      "dewpoint": {
+        "name": "Rosný bod"
+      },
+      "windchill": {
+        "name": "Pocitová teplota"
+      },
+      "humidity": {
+        "name": "Vlhkost"
+      },
+      "absolute_humidity": {
+        "name": "Absolutní vlhkost"
+      },
+      "pressure": {
+        "name": "Tlak"
+      },
+      "pressure_absolute": {
+        "name": "Absolutní tlak"
+      },
+      "wind_speed": {
+        "name": "Rychlost větru"
+      },
+      "wind_speed_average": {
+        "name": "Průměrná rychlost větru"
+      },
+      "wind_gust": {
+        "name": "Náraz větru"
+      },
+      "wind_bearing": {
+        "name": "Azimut větru"
+      },
+      "beaufort": {
+        "name": "Beaufort"
+      },
+      "barometric_altitude": {
+        "name": "Barometrická výška"
+      },
+      "system_temperature": {
+        "name": "Teplota elektroniky"
+      },
+      "irradiance": {
+        "name": "Intenzita slunečního svitu"
+      },
+      "uv_factor": {
+        "name": "UV faktor"
+      },
+      "lightning_distance": {
+        "name": "Vzdálenost blesku"
+      },
+      "lightning_energy": {
+        "name": "Energie blesku"
+      },
+      "wind_direction": {
+        "name": "Směr větru",
+        "state": {
+          "n": "S",
+          "nne": "SSV",
+          "ne": "SV",
+          "ene": "VSV",
+          "e": "V",
+          "ese": "VJV",
+          "se": "JV",
+          "sse": "JJV",
+          "s": "J",
+          "ssw": "JJZ",
+          "sw": "JZ",
+          "wsw": "ZJZ",
+          "w": "Z",
+          "wnw": "ZSZ",
+          "nw": "SZ",
+          "nnw": "SSZ"
+        }
+      }
+    }
+  }
+}
