@@ -69,6 +69,21 @@ def status_url(host: str) -> str:
     return f"http://{url_host(host)}{STATUS_PATH}"
 
 
+def device_title(devname: str | None) -> str:
+    """Pick the device name shown in front of every entity name.
+
+    Home Assistant composes entity names as "<device> <entity>", so a device
+    called "GIOM 3000AE" pushes the part that matters - Temperature, Wind gust -
+    off the end of narrow columns. The station's own devname is used only when
+    the owner has actually named it something; a factory model string gets
+    shortened, and the full text stays on the device page as the model.
+    """
+    name = (devname or "").strip()
+    if not name or name.upper().startswith(("GIOM", "IQWS")):
+        return "GIOM"
+    return name
+
+
 def beaufort(speed: float) -> int:
     """Convert a wind speed in m/s to the Beaufort scale."""
     for force, limit in enumerate(BEAUFORT_LIMITS):

@@ -32,7 +32,7 @@ from .const import (
     MIN_SCAN_INTERVAL,
     OID_TEMPERATURE,
 )
-from .coordinator import GiomConfigEntry, parse_status, status_url
+from .coordinator import GiomConfigEntry, device_title, parse_status, status_url
 from .snmp import SnmpError, get
 
 _LOGGER = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class GiomConfigFlow(ConfigFlow, domain=DOMAIN):
                     _LOGGER.debug("SNMP available on %s: %s", host, use_snmp)
 
                     return self.async_create_entry(
-                        title=readings.get("devname") or "GIOM 3000",
+                        title=device_title(readings.get("devname")),
                         data={
                             CONF_HOST: host,
                             CONF_COMMUNITY: community,
