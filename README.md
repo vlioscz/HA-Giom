@@ -147,8 +147,11 @@ SNMP v1, prefix `0.1.3.6.1.4.1.21287.15.`, suffix `.0`:
 | `.10` | Beaufort | | | |
 | `.11` | Saturated steam pressure | | | |
 
-On a GIOM 3000AE, `.8` returns `NEE` for index 3 where `ENE` is meant, and
-`.11` returns a constant. This integration uses neither.
+On a GIOM 3000AE the labels in `.8` are mangled — `NEE` for index 3, `NWW`
+for index 13, where `ENE` and `WNW` are meant. `.11` does vary, but its
+readings match neither saturated vapour pressure for the reported temperature
+nor any consistent scaling of it. This integration uses neither OID; wind
+direction is derived from the index instead.
 
 ## Without HACS, without a custom component
 
@@ -167,6 +170,20 @@ Rozhraní je česky. Za pozornost stojí, že údaj *Tlak* je přepočtený na
 nadmořskou výšku nastavenou ve stanici, ne to, co barometr naměřil — pokud ji
 tam nemáš správně, hodnota je posunutá. Absolutní tlak je samostatný senzor,
 dostupný při zapnutém SNMP.
+
+## Development
+
+Hardware findings, design rationale and what is still unverified are written up
+in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+
+`tools/probe.py` finds a station on the network and dumps every value it
+exposes. It needs no dependencies, so it also runs inside a Home Assistant
+terminal add-on:
+
+```bash
+python tools/probe.py --scan 192.168.0.0/24
+python tools/probe.py 192.168.0.100
+```
 
 ## Disclaimer
 
