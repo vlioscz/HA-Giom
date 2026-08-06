@@ -1,0 +1,64 @@
+name: Bug report
+description: Something does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. The station outputs below
+        are what makes a report actionable — please include them if you can.
+  - type: dropdown
+    id: model
+    attributes:
+      label: Station model
+      options:
+        - GIOM 3000
+        - GIOM 3000AE
+        - GIOM 4000
+        - IQWS-4000
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Station firmware
+      description: Shown in the station's own web interface.
+      placeholder: "1.0.3"
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.8.0"
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      description: Shown in HACS, or in `custom_components/giom/manifest.json`.
+      placeholder: "0.5.1"
+    validations:
+      required: true
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: status_xml
+    attributes:
+      label: status.xml output
+      description: >-
+        Open `http://<station-address>/status.xml` in a browser and paste the
+        result. Feel free to blank out anything you consider private.
+      render: xml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Home Assistant log lines
+      description: >-
+        Settings → System → Logs, filter for "giom". Diagnostics from the
+        device page are also welcome — they redact the address automatically.
+      render: text

@@ -1,0 +1,14 @@
+<response>
+<devname>GIOM 3000AE    </devname>
+<windspeed>2.5</windspeed>
+<windgust>4.1</windgust>
+<winddir>3</winddir>
+<pressure>1011.7</pressure>
+<systemp>34.2</systemp>
+<temperature>30.6</temperature>
+<baraltitude>423.0</baraltitude>
+<windchill>30.6</windchill>
+<relhumidity>41.0</relhumidity>
+<abshumidity>12.9</abshumidity>
+<dewpoint>16.1</dewpoint>
+</response>

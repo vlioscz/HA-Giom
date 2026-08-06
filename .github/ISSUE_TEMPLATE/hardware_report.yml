@@ -1,0 +1,71 @@
+name: Hardware report
+description: Own a GIOM model this integration has not been verified on? A few pasted outputs move it towards 1.0.
+labels: ["hardware-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        So far only one station has been verified against real hardware. The
+        GIOM 4000 and IQWS-4000 support is based on the manufacturer's manual
+        alone — a report from a real unit, working or not, is exactly what is
+        needed to verify it. Thank you!
+  - type: dropdown
+    id: model
+    attributes:
+      label: Station model
+      options:
+        - GIOM 3000
+        - GIOM 3000AE
+        - GIOM 4000
+        - IQWS-4000
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Station firmware
+      description: Shown in the station's own web interface.
+      placeholder: "1.0.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: How well does it work?
+      options:
+        - Everything works
+        - Works, but some sensors are missing
+        - Works, but some values are wrong
+        - Setup fails
+        - Have not tried yet — just providing data
+    validations:
+      required: true
+  - type: textarea
+    id: status_xml
+    attributes:
+      label: status.xml output
+      description: >-
+        Open `http://<station-address>/status.xml` in a browser and paste the
+        result. This is the single most useful thing you can provide — it shows
+        exactly which fields your model reports.
+      render: xml
+    validations:
+      required: true
+  - type: textarea
+    id: probe
+    attributes:
+      label: probe.py output (optional)
+      description: >-
+        For extra credit, run `python tools/probe.py <station-address>` from a
+        checkout of this repository and paste the output. It needs nothing but
+        Python itself and additionally checks the SNMP side.
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: >-
+        Wrong-looking values, the speed unit configured in the station
+        (m/s vs km/h), the altitude setting, sensors you expected but did not
+        get, and so on.

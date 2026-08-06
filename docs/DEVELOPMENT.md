@@ -36,11 +36,21 @@ python tools/probe.py --scan 192.168.0.0/24
 ### What CI checks
 
 `.github/workflows/validate.yml` runs **hassfest** (manifest, translations,
-structure) and the **HACS action** (repository layout, brands). Both must stay
-green; the HACS brands check in particular is what the bundled
-`custom_components/giom/brand/` assets exist to satisfy.
+structure), the **HACS action** (repository layout, brands) and **pytest**
+over `tests/`. All must stay green; the HACS brands check in particular is
+what the bundled `custom_components/giom/brand/` assets exist to satisfy.
 
-There are no unit tests yet — see *Open items*.
+To run the tests locally:
+
+```bash
+pip install -r requirements-test.txt
+pytest
+```
+
+`pytest-homeassistant-custom-component` pulls in a matching Home Assistant, so
+the first install is large. The fixtures in `tests/fixtures/` are the
+reference `status.xml` documents — one 3000-series, one 4000-series — that
+lock in the entity-from-payload behaviour.
 
 ---
 
@@ -58,12 +68,12 @@ Be careful not to present the second column as fact.
 | OIDs `.19`–`.23` absent on a GIOM 3000 | ✅ measured (`noSuchName`) |
 | GIOM 4000 / IQWS-4000 works | 🟡 from the manufacturer's manual only |
 | `spower`, `uf`, `sdist`, `senr` field names | 🟡 from the manual, never seen live |
-| Config flow behaves in a running Home Assistant | 🟡 **never executed** |
-| Options flow, reload-on-change | 🟡 **never executed** |
+| Config flow behaves in a running Home Assistant | 🟡 covered by tests, never run against real hardware |
+| Options flow, reload-on-change | 🟡 covered by tests, never run against real hardware |
 
-The last two matter most. Everything in `coordinator.py` was exercised against
-a live station by extracting the pure functions and calling them directly, but
-no part of this integration has been run inside Home Assistant by its author.
+The tests in `tests/` exercise the config flow, options flow, setup and
+entity creation inside a simulated Home Assistant, but no part of this
+integration has been run in a production instance by its author.
 
 ---
 
@@ -205,6 +215,7 @@ custom_components/giom/     the integration
   sensor.py                 entity descriptions
   brand/                    what HACS displays
 brands/                     icon sources + make_icons.py
+tests/                      pytest suite, fixtures in tests/fixtures/
 tools/probe.py              standalone diagnostic, runs anywhere
 yaml-package/               the no-custom-component alternative
 docs/DEVELOPMENT.md         this file
@@ -222,11 +233,6 @@ change; `brands/README.md` says so too.
 only significant path never executed. Watch for: the duplicate-host abort, the
 SNMP auto-probe verdict, and whether the entry title comes out as `GIOM`.
 
-**Add tests.** `parse_status`, `beaufort`, `device_title`, `status_url` and the
-BER encoder in `snmp.py` are all pure and trivially testable. A fixture pair of
-`status.xml` documents — one 3000, one 4000 — would lock in the
-entity-from-payload behaviour.
-
 **Find a 4000-series unit.** Would move four sensors and the compatibility
 claim from assumed to verified.
 
@@ -236,9 +242,9 @@ claim from assumed to verified.
 lightning timestamp documented as "UTC hex" and `lpd` is unexplained. Neither
 is implemented.
 
-**Submitting to HACS default** would need a PR to
-[home-assistant/brands](https://github.com/home-assistant/brands). The files in
-`brands/` are already the right sizes.
+**HACS default submission** is done — [hacs/default#9780](https://github.com/hacs/default/pull/9780),
+awaiting a maintainer. No PR to home-assistant/brands was needed: the in-repo
+`custom_components/giom/brand/` assets satisfy the HACS brand check.
 
 ### Releasing
 
