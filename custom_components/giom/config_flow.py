@@ -69,6 +69,31 @@ class GiomConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    async def _async_check_station(
+        self, host: str, community: str
+    ) -> tuple[dict[str, str], dict[str, Any], bool]:
+        """Verify the station answers; return (errors, readings, snmp works)."""
+        try:
+            readings = await _async_probe_http(self.hass, host)
+        except (ClientError, TimeoutError):
+            return {"base": "cannot_connect"}, {}, False
+        except ValueError:
+            return {"base": "invalid_response"}, {}, False
+        except Exception:  # noqa: BLE001 - show a message, not a traceback
+            _LOGGER.exception("Unexpected error probing %s", host)
+            return {"base": "unknown"}, {}, False
+
+        if not readings:
+            return {"base": "invalid_response"}, {}, False
+
+        # SNMP carries two values status.xml leaves out. Probe once here so
+        # the user never has to know it exists.
+        use_snmp = await self.hass.async_add_executor_job(
+            _probe_snmp, host, community
+        )
+        _LOGGER.debug("SNMP available on %s: %s", host, use_snmp)
+        return {}, readings, use_snmp
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -81,39 +106,75 @@ class GiomConfigFlow(ConfigFlow, domain=DOMAIN):
 
             self._async_abort_entries_match({CONF_HOST: host})
 
-            try:
-                readings = await _async_probe_http(self.hass, host)
-            except (ClientError, TimeoutError):
-                errors["base"] = "cannot_connect"
-            except ValueError:
-                errors["base"] = "invalid_response"
-            else:
-                if not readings:
-                    errors["base"] = "invalid_response"
-                else:
-                    await self.async_set_unique_id(host)
-                    self._abort_if_unique_id_configured()
+            errors, readings, use_snmp = await self._async_check_station(
+                host, community
+            )
+            if not errors:
+                await self.async_set_unique_id(host)
+                self._abort_if_unique_id_configured()
 
-                    # SNMP carries two values status.xml leaves out. Probe once
-                    # here so the user never has to know it exists.
-                    use_snmp = await self.hass.async_add_executor_job(
-                        _probe_snmp, host, community
-                    )
-                    _LOGGER.debug("SNMP available on %s: %s", host, use_snmp)
-
-                    return self.async_create_entry(
-                        title=device_title(readings.get("devname")),
-                        data={
-                            CONF_HOST: host,
-                            CONF_COMMUNITY: community,
-                            CONF_USE_SNMP: use_snmp,
-                        },
-                    )
+                return self.async_create_entry(
+                    title=device_title(readings.get("devname")),
+                    data={
+                        CONF_HOST: host,
+                        CONF_COMMUNITY: community,
+                        CONF_USE_SNMP: use_snmp,
+                    },
+                )
 
         return self.async_show_form(
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(
                 STEP_USER_SCHEMA, user_input
+            ),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Point the entry at a new address without losing the entities.
+
+        Stations get new DHCP leases; deleting and re-adding the integration
+        would throw away entity ids and history for no reason.
+        """
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST].strip()
+            community = user_input.get(CONF_COMMUNITY, DEFAULT_COMMUNITY).strip()
+
+            for other in self._async_current_entries():
+                if (
+                    other.entry_id != entry.entry_id
+                    and other.data.get(CONF_HOST) == host
+                ):
+                    return self.async_abort(reason="already_configured")
+
+            errors, _, use_snmp = await self._async_check_station(host, community)
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    entry,
+                    unique_id=host,
+                    data_updates={
+                        CONF_HOST: host,
+                        CONF_COMMUNITY: community,
+                        CONF_USE_SNMP: use_snmp,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                STEP_USER_SCHEMA,
+                user_input
+                or {
+                    CONF_HOST: entry.data[CONF_HOST],
+                    CONF_COMMUNITY: entry.data.get(
+                        CONF_COMMUNITY, DEFAULT_COMMUNITY
+                    ),
+                },
             ),
             errors=errors,
         )

@@ -12,14 +12,28 @@
           "host": "IP adresa nebo hostname, například 192.168.0.100. IPv6 patří do hranatých závorek.",
           "community": "Nech „public“, pokud sis ji ve stanici nezměnil."
         }
+      },
+      "reconfigure": {
+        "title": "Změna adresy stanice",
+        "description": "Nasměruj integraci na novou adresu stanice. Entity a jejich historie zůstanou zachovány.",
+        "data": {
+          "host": "Adresa",
+          "community": "SNMP community"
+        },
+        "data_description": {
+          "host": "IP adresa nebo hostname, například 192.168.0.100. IPv6 patří do hranatých závorek.",
+          "community": "Nech „public“, pokud sis ji ve stanici nezměnil."
+        }
       }
     },
     "error": {
       "cannot_connect": "Stanice neodpovídá. Zkontroluj adresu a že její web běží na portu 80.",
-      "invalid_response": "Adresa odpověděla, ale ne souborem status.xml. Ověř, že jde opravdu o meteostanici GIOM."
+      "invalid_response": "Adresa odpověděla, ale ne souborem status.xml. Ověř, že jde opravdu o meteostanici GIOM.",
+      "unknown": "Neočekávaná chyba. Podrobnosti najdeš v logu Home Assistantu."
     },
     "abort": {
-      "already_configured": "Tahle stanice už je nastavená."
+      "already_configured": "Tahle stanice už je nastavená.",
+      "reconfigure_successful": "Adresa stanice byla změněna."
     }
   },
   "options": {

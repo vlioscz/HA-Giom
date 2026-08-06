@@ -1,5 +1,6 @@
 # GIOM weather station — Home Assistant integration
 
+[![release][release-badge]][release-url]
 [![hacs][hacs-badge]][hacs-url]
 [![validate][validate-badge]][validate-url]
 [![license][license-badge]](LICENSE)
@@ -193,6 +194,8 @@ Device names are trademarks of their respective owners.
 
 [mikrovlny]: https://www.mikrovlny.cz/
 [issues]: https://github.com/vlioscz/HA-Giom/issues
+[release-badge]: https://img.shields.io/github/v/release/vlioscz/HA-Giom
+[release-url]: https://github.com/vlioscz/HA-Giom/releases/latest
 [hacs-badge]: https://img.shields.io/badge/HACS-custom-41BDF5.svg
 [hacs-url]: https://hacs.xyz/
 [validate-badge]: https://github.com/vlioscz/HA-Giom/actions/workflows/validate.yml/badge.svg

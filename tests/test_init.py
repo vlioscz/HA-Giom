@@ -36,6 +36,12 @@ async def test_setup_creates_entities_from_payload(
     assert hass.states.get("sensor.giom_wind_direction").state == "ene"
     assert hass.states.get("sensor.giom_beaufort_force").state == "2"
 
+    # Wind bearing renders as a compass card in the frontend.
+    bearing = hass.states.get("sensor.giom_wind_bearing")
+    assert bearing.state == "67.5"
+    assert bearing.attributes["device_class"] == "wind_direction"
+    assert bearing.attributes["state_class"] == "measurement_angle"
+
     # 3000-series payload carries no light or lightning readings, so those
     # entities must not exist at all - not even as unavailable.
     assert hass.states.get("sensor.giom_sunlight_intensity") is None
@@ -52,8 +58,12 @@ async def test_setup_creates_4000_entities(
 
     assert hass.states.get("sensor.giom_sunlight_intensity").state == "512.3"
     assert hass.states.get("sensor.giom_uv_factor").state == "3.2"
-    assert hass.states.get("sensor.giom_lightning_distance").state == "12.0"
     assert hass.states.get("sensor.giom_lightning_energy").state == "8541.0"
+
+    # Event-like readings: no state_class, so no long-term statistics.
+    lightning = hass.states.get("sensor.giom_lightning_distance")
+    assert lightning.state == "12.0"
+    assert "state_class" not in lightning.attributes
 
 
 async def test_unique_ids_are_stable(

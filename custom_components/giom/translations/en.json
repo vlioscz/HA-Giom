@@ -12,14 +12,28 @@
           "host": "IP address or hostname, for example 192.168.0.100. IPv6 goes in square brackets.",
           "community": "Leave as 'public' unless you changed it in the station's own configuration page."
         }
+      },
+      "reconfigure": {
+        "title": "Update the station's address",
+        "description": "Point the integration at the station's new address. Entities and their history stay untouched.",
+        "data": {
+          "host": "Host",
+          "community": "SNMP community"
+        },
+        "data_description": {
+          "host": "IP address or hostname, for example 192.168.0.100. IPv6 goes in square brackets.",
+          "community": "Leave as 'public' unless you changed it in the station's own configuration page."
+        }
       }
     },
     "error": {
       "cannot_connect": "Could not reach the station. Check the address and that its web interface is on port 80.",
-      "invalid_response": "The address responded, but not with a GIOM status.xml. Make sure this is a GIOM weather station."
+      "invalid_response": "The address responded, but not with a GIOM status.xml. Make sure this is a GIOM weather station.",
+      "unknown": "Unexpected error. Check the Home Assistant logs for details."
     },
     "abort": {
-      "already_configured": "This station is already set up."
+      "already_configured": "This station is already set up.",
+      "reconfigure_successful": "The station's address was updated."
     }
   },
   "options": {

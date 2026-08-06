@@ -124,9 +124,9 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         key="wind_bearing",
         source_key="wind_bearing",
         translation_key="wind_bearing",
+        device_class=SensorDeviceClass.WIND_DIRECTION,
         native_unit_of_measurement=DEGREE,
-        state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:compass-outline",
+        state_class=SensorStateClass.MEASUREMENT_ANGLE,
         value_fn=_plain("wind_bearing"),
     ),
     GiomSensorDescription(
@@ -188,13 +188,15 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         icon="mdi:sun-wireless",
         value_fn=_plain("uf"),
     ),
+    # No state_class on the lightning pair: "the last strike" is an event
+    # reading, not a continuous quantity, and long-term statistics over it
+    # would be meaningless.
     GiomSensorDescription(
         key="lightning_distance",
         source_key="sdist",
         translation_key="lightning_distance",
         device_class=SensorDeviceClass.DISTANCE,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
-        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:flash",
         value_fn=_plain("sdist"),
     ),
@@ -202,7 +204,6 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         key="lightning_energy",
         source_key="senr",
         translation_key="lightning_energy",
-        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:flash-alert",
         value_fn=_plain("senr"),
     ),

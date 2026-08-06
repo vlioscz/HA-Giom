@@ -101,6 +101,17 @@ async def test_user_flow_empty_payload(hass: HomeAssistant):
     assert result["errors"] == {"base": "invalid_response"}
 
 
+async def test_user_flow_unexpected_error(hass: HomeAssistant):
+    with patch(
+        "custom_components.giom.config_flow._async_probe_http",
+        side_effect=RuntimeError("boom"),
+    ):
+        result = await _submit(hass, {CONF_HOST: HOST, CONF_COMMUNITY: "public"})
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
+
+
 async def test_duplicate_host_aborts(hass: HomeAssistant):
     MockConfigEntry(
         domain=DOMAIN,
@@ -112,6 +123,66 @@ async def test_duplicate_host_aborts(hass: HomeAssistant):
 
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+async def test_reconfigure_changes_host(hass: HomeAssistant):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="GIOM",
+        data={CONF_HOST: HOST, CONF_COMMUNITY: "public", CONF_USE_SNMP: True},
+        unique_id=HOST,
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "reconfigure"
+
+    new_host = "192.168.0.200"
+    with (
+        patch(
+            "custom_components.giom.config_flow._async_probe_http",
+            return_value=READINGS,
+        ),
+        patch(
+            "custom_components.giom.config_flow._probe_snmp", return_value=False
+        ),
+        patch("custom_components.giom.async_setup_entry", return_value=True),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: new_host, CONF_COMMUNITY: "public"}
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_HOST] == new_host
+    assert entry.data[CONF_USE_SNMP] is False  # re-probed on the new address
+    assert entry.unique_id == new_host
+
+
+async def test_reconfigure_to_other_entrys_host_aborts(hass: HomeAssistant):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: HOST, CONF_COMMUNITY: "public", CONF_USE_SNMP: False},
+        unique_id=HOST,
+    )
+    entry.add_to_hass(hass)
+    other_host = "192.168.0.200"
+    MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: other_host, CONF_COMMUNITY: "public", CONF_USE_SNMP: False},
+        unique_id=other_host,
+    ).add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: other_host, CONF_COMMUNITY: "public"}
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    assert entry.data[CONF_HOST] == HOST  # untouched
 
 
 async def test_options_flow(hass: HomeAssistant, aioclient_mock, status_3000):
