@@ -14,7 +14,8 @@ Local polling only — no cloud, no account, nothing leaves your network.
 
 | Model | Status |
 |---|---|
-| GIOM 3000 / 3000AE | ✅ verified on firmware 1.0.3 |
+| GIOM 3000AE | ✅ verified on firmware 1.0.3 |
+| GIOM 3000 | 🟡 expected to work (same family) — [reports welcome][issues] |
 | GIOM 4000NG / IQWS-4000 | 🟡 expected to work — [reports welcome][issues] |
 
 The 4000 series shares the same interface: its manual states *"M2M protocol
