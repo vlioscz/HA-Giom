@@ -115,6 +115,9 @@
       "lightning_per_day": {
         "name": "Blesků za den"
       },
+      "lightning_last_strike": {
+        "name": "Poslední blesk"
+      },
       "status_pressure": {
         "name": "Stav čidla tlaku"
       },

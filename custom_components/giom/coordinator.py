@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any
 from xml.etree import ElementTree
@@ -145,8 +145,24 @@ def parse_status(payload: str) -> dict[str, Any]:
         except ValueError:
             _LOGGER.debug("Ignoring non-numeric winddir=%r", index)
         else:
-            data["wind_bearing"] = round(step * DEGREES_PER_STEP, 1)
+            # The station reports north as 360.0, never 0 - match it, so the
+            # value lines up with its web UI and its own wdird field.
+            bearing = round((step % 16) * DEGREES_PER_STEP, 1)
+            data["wind_bearing"] = bearing if bearing else 360.0
             data["wind_direction"] = COMPASS_POINTS[step % len(COMPASS_POINTS)]
+
+    # stime is the last lightning strike as hexadecimal unix time;
+    # 0x00000000 means no strike recorded yet.
+    if (stamp := raw.get("stime")) not in (None, ""):
+        try:
+            ticks = int(stamp, 16)
+        except ValueError:
+            _LOGGER.debug("Ignoring non-hex stime=%r", stamp)
+        else:
+            if ticks > 0:
+                data["lightning_last_strike"] = datetime.fromtimestamp(
+                    ticks, tz=timezone.utc
+                )
 
     if (speed := data.get("windspeed")) is not None:
         data["beaufort"] = beaufort(speed)

@@ -136,6 +136,9 @@
       "lightning_per_day": {
         "name": "Lightning strikes per day"
       },
+      "lightning_last_strike": {
+        "name": "Last lightning strike"
+      },
       "status_pressure": {
         "name": "Pressure sensor status"
       },

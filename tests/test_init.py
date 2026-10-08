@@ -86,6 +86,12 @@ async def test_setup_creates_4000_entities(
     # The daily strike counter comes from status.xml's lpd field.
     assert hass.states.get("sensor.giom_lightning_strikes_per_day").state == "1018.0"
 
+    # stime is hexadecimal unix time; 0x6AC7C278 is 2026-10-08 16:19:04 UTC.
+    assert (
+        hass.states.get("sensor.giom_last_lightning_strike").state
+        == "2026-10-08T16:19:04+00:00"
+    )
+
     # data.xml extras: average wind speed over HTTP (SNMP is off here) and
     # the four sensor-health flags. Home Assistant's metric unit system
     # presents wind speeds in km/h, so 0.6 m/s reads back as 2.16.

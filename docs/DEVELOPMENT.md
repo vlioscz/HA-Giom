@@ -72,6 +72,9 @@ Be careful not to present the second column as fact.
 | `lpd` = `LD` = lightning strikes per day | ✅ matched live + manufacturer's comment |
 | `/data.xml` on the 4000: IAS average, PSS/THS/SSS/TS health flags | ✅ measured live |
 | data.xml `PRS` is the relative pressure, not the absolute | ✅ measured (1006.5 vs 952) |
+| Beaufort bounds 0.5/1.5/3.3/… strict, north = 360.0° not 0° | ✅ from the web UI source |
+| `stime`/`ST`/`systm` are hexadecimal **unix** time | ✅ matched against the clock |
+| 4000 XML speeds are always m/s; unit switching is client-side JS | ✅ from the web UI source |
 | Config flow behaves in a running Home Assistant | 🟡 covered by tests, never run against real hardware |
 | Options flow, reload-on-change | 🟡 covered by tests, never run against real hardware |
 
@@ -131,7 +134,10 @@ established — `ar16.gif` is a 404.
 
 - **`.8`, wind direction as text**, mangles the labels: `NEE` for index 3 and
   `NWW` for index 13, where `ENE` and `WNW` are meant. The integration derives
-  the compass point from the index instead.
+  the compass point from the index instead. The 4000's web UI uses the same
+  firmware table (`NEE`/`EES`/`SWW`/`NWW` for indices 3/5/11/13), so this is
+  a manufacturer-wide quirk, not an SNMP bug — expect the station page to
+  show different letters than Home Assistant for those four directions.
 - **`.11`, "saturated steam pressure"**, varies but does not match saturated
   vapour pressure for the reported temperature, nor any consistent scale of it
   (2501.5 at 30.6 °C, 1880.1 at 28.8 °C, where the physical values are about
@@ -240,11 +246,19 @@ change; `brands/README.md` says so too.
 only significant path never executed. Watch for: the duplicate-host abort, the
 SNMP auto-probe verdict, and whether the entry title comes out as `GIOM`.
 
-**Read the station's speed-unit setting** rather than assuming m/s.
+**Read the 3000's speed-unit setting** rather than assuming m/s. On the
+4000 this is settled: the XML always carries m/s and the unit switch lives
+purely in the web UI's JavaScript. Whether the 3000's firmware behaves the
+same is still unverified.
 
-**Consider `stime`/`systm`.** The lightning timestamp (`stime`, "UTC hex")
-and the system clock (`systm` in data.xml) are the only fields still
-unimplemented. Both are hex tick values; decoding them needs a known epoch.
+**Health-flag failure codes are unknown.** The four status fields read `OK`
+on a healthy station and are passed through verbatim; what a broken sensor
+sends has never been observed (the station's own JS just prints it as-is).
+When a report with a failure code arrives, consider mapping the flags to
+binary sensors.
+
+**`systm`** (the station's own clock, hex unix time in data.xml) is the only
+field left unimplemented — useful at most for detecting clock drift.
 
 ### The data.xml endpoint (4000 series)
 
@@ -293,6 +307,10 @@ that is what users' HACS update prompts key off.
 
 ## Reference
 
+- [iqws4000-protocol.md](iqws4000-protocol.md) — both endpoints, every field
+  with the manufacturer's own comments, and the exact unit-conversion
+  coefficients, extracted live from an IQWS-4000 (fw 2.0.3) and its web UI
+  source. The authoritative companion to this file for the 4000 series.
 - [IQWS-4000 manual (PDF)](http://www.iqtronic.com/wp-content/uploads/2021/07/IQWS4000_manual_en.pdf)
   — the successor's manual, source of the OID map, the XML field list and the
   M2M compatibility claim. The most useful document that exists; the GIOM 3000's

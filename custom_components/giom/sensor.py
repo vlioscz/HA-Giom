@@ -219,6 +219,13 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         icon="mdi:flash-alert",
         value_fn=_plain("senr"),
     ),
+    GiomSensorDescription(
+        key="lightning_last_strike",
+        source_key="lightning_last_strike",
+        translation_key="lightning_last_strike",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=_plain("lightning_last_strike"),
+    ),
     # A daily counter - per the manufacturer's own field comment. It resets
     # at midnight, which is exactly what TOTAL_INCREASING is for.
     GiomSensorDescription(

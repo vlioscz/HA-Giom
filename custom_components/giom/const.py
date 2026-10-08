@@ -60,19 +60,22 @@ COMPASS_POINTS: Final = [
     "nnw",
 ]
 
-# Upper bound of each Beaufort force in m/s. Computed locally so the value is
-# available even when SNMP is switched off on the station.
+# Upper bound (exclusive) of each Beaufort force in m/s. Computed locally so
+# the value is available even when SNMP is switched off on the station.
+# These are the exact strict bounds from the station's own web UI source, so
+# the sensor agrees with the station on boundary values too - they differ
+# slightly from the WMO rounding convention (0.5 here vs 0.3, etc.).
 BEAUFORT_LIMITS: Final = [
-    0.3,
-    1.6,
-    3.4,
+    0.5,
+    1.5,
+    3.3,
     5.5,
-    8.0,
-    10.8,
-    13.9,
-    17.2,
-    20.8,
-    24.5,
-    28.5,
-    32.7,
+    7.9,
+    10.7,
+    13.8,
+    17.1,
+    20.7,
+    24.4,
+    28.4,
+    32.6,
 ]

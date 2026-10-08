@@ -29,7 +29,15 @@ def test_parse_3000_payload(status_3000):
     assert data["beaufort"] == 2
 
     # 4000-only fields must not materialise out of nothing
-    for key in ("spower", "uf", "illuminance", "lpd", "sdist", "senr"):
+    for key in (
+        "spower",
+        "uf",
+        "illuminance",
+        "lpd",
+        "sdist",
+        "senr",
+        "lightning_last_strike",
+    ):
         assert key not in data
 
 
@@ -73,14 +81,35 @@ def test_malformed_xml_raises():
         parse_status("this is not xml")
 
 
+def test_winddir_north_is_360():
+    # The station reports north as 360.0 degrees, never 0.
+    data = parse_status("<r><winddir>0</winddir></r>")
+    assert data["wind_bearing"] == 360.0
+    assert data["wind_direction"] == "n"
+
+
 def test_winddir_index_wraps():
     data = parse_status("<r><winddir>16</winddir></r>")
+    assert data["wind_bearing"] == 360.0
     assert data["wind_direction"] == "n"
+
+
+def test_stime_parses_as_utc_timestamp(status_4000):
+    stamp = parse_status(status_4000)["lightning_last_strike"]
+    assert stamp.timestamp() == 0x6AC7C278
+    assert stamp.tzinfo is not None
+
+
+def test_stime_zero_means_no_strike_yet():
+    data = parse_status("<r><stime>0x00000000</stime></r>")
+    assert "lightning_last_strike" not in data
 
 
 @pytest.mark.parametrize(
     ("speed", "force"),
-    [(0.0, 0), (0.2, 0), (0.3, 1), (2.5, 2), (10.8, 6), (35.0, 12)],
+    # The station's own strict bounds: 0.4 is still calm, 1.5 is already
+    # force 2. Verified against the web UI source.
+    [(0.0, 0), (0.4, 0), (0.5, 1), (1.5, 2), (2.5, 2), (10.7, 6), (35.0, 12)],
 )
 def test_beaufort_boundaries(speed, force):
     assert beaufort(speed) == force
