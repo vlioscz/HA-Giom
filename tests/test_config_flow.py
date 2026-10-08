@@ -187,6 +187,7 @@ async def test_reconfigure_to_other_entrys_host_aborts(hass: HomeAssistant):
 
 async def test_options_flow(hass: HomeAssistant, aioclient_mock, status_3000):
     aioclient_mock.get(f"http://{HOST}/status.xml", text=status_3000)
+    aioclient_mock.get(f"http://{HOST}/data.xml", status=404)
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="GIOM",

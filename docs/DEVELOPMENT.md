@@ -69,6 +69,9 @@ Be careful not to present the second column as fact.
 | GIOM 4000 / IQWS-4000 works | ✅ verified live on an IQWS-4000 (2026-10) |
 | `spower`, `uf`, `sdist`, `senr` field names | ✅ seen live on an IQWS-4000 |
 | Web-UI lux = `spower` × 126.7, no light sensor involved | ✅ read from the page source |
+| `lpd` = `LD` = lightning strikes per day | ✅ matched live + manufacturer's comment |
+| `/data.xml` on the 4000: IAS average, PSS/THS/SSS/TS health flags | ✅ measured live |
+| data.xml `PRS` is the relative pressure, not the absolute | ✅ measured (1006.5 vs 952) |
 | Config flow behaves in a running Home Assistant | 🟡 covered by tests, never run against real hardware |
 | Options flow, reload-on-change | 🟡 covered by tests, never run against real hardware |
 
@@ -155,11 +158,14 @@ The polling interval therefore *is* the gust window.
 
 ## Design decisions
 
-### One HTTP poll, SNMP only for the gaps
+### HTTP first, SNMP only for the gaps
 
-`status.xml` covers eleven readings in a single request. Only *average wind
-speed* and *absolute pressure* need SNMP, so SNMP is a top-up rather than the
-transport. It is probed once during setup and can be switched off in options.
+`status.xml` covers the core readings in a single request; on the 4000
+series a second GET to `data.xml` adds the average wind speed and the
+sensor-health flags. That leaves *absolute pressure* as the only reading
+that still needs SNMP (plus the wind average on stations without data.xml).
+SNMP is probed once during setup, can be switched off in options, and the
+redundant wind-average request is skipped whenever data.xml supplied it.
 
 **SNMP failure must never fail the update.** `_async_fetch_snmp` swallows
 `SnmpError` and returns an empty dict, so the HTTP readings survive a station
@@ -236,30 +242,42 @@ SNMP auto-probe verdict, and whether the entry title comes out as `GIOM`.
 
 **Read the station's speed-unit setting** rather than assuming m/s.
 
-**Read the sensor-status fields.** The IQWS-4000 web UI source maps its
-fields with the manufacturer's own (Czech) comments:
+**Consider `stime`/`systm`.** The lightning timestamp (`stime`, "UTC hex")
+and the system clock (`systm` in data.xml) are the only fields still
+unimplemented. Both are hex tick values; decoding them needs a known epoch.
 
-| key | meaning | key | meaning |
-|---|---|---|---|
-| SP | solar power W/m² | SD | lightning distance, km |
-| UF | UV factor | SE | lightning energy |
-| SSS | light-sensor status | TS | lightning-sensor status |
-| | | ST | time of last event (UTC ticks) |
+### The data.xml endpoint (4000 series)
 
-`SSS` and `TS` are health flags — the way to tell a dead sensor from a
-genuine zero, which matters when covers hang off the illuminance value. Not
-implemented yet because the matching `status.xml` tag names are unknown
-(the XML uses long names: SP → `spower`, SD → `sdist`, SE → `senr`,
-ST → `stime`); grab a live `status.xml` from the IQWS-4000 to find them.
-`stime` itself is also still unimplemented.
+Besides `status.xml`, the 4000 series serves `/data.xml` — the endpoint its
+own web UI actually polls (a GIOM 3000 has no such endpoint; the integration
+treats it like SNMP, a bonus that never fails the update). Short keys, same
+readings, plus four things `status.xml` does not have, measured live on an
+IQWS-4000 (fixtures in `tests/fixtures/`):
 
-**`lpd` remains unexplained.** It is present in the 4000's XML (53 while
-spower was 0.4; the manual shows 1018 at spower 110) but matches neither the
-lux formula nor anything else identified so far. The web UI's lux is purely
-`spower` × 126.7 — a coefficient hard-wired in the page
-(`get lux(){ return +(this.value * 126.7).toFixed(2); }`), which is exactly
-how the Illuminance sensor now derives its value. `lpd` is deliberately not
-read.
+| status.xml | data.xml | note |
+|---|---|---|
+| windspeed | IWS | |
+| — | **IAS** | **average wind speed — no SNMP needed for it anymore** |
+| windgust / winddir | WG / WD | |
+| pressure | PRS | relative (QNH) — the absolute value stays SNMP-only |
+| temperature / relhumidity / abshumidity | TM / RH / AH | |
+| windchill / dewpoint | WC / DP | |
+| baraltitude / systemp | BA / systp | |
+| spower / uf | SP / UF | |
+| stime / sdist / senr | ST / SD / SE | |
+| lpd | LD | **lightning strikes per day** (manufacturer's comment) |
+| — | systm | system time, UTC hex |
+| — | **PSS THS SSS TS** | **sensor-health flags**, free text, `OK` when healthy |
+
+The health flags (pressure, temperature/humidity, light, lightning) are how
+a dead sensor is told apart from a genuine zero — exposed as diagnostic
+sensors, passed through verbatim since the failure codes are unknown.
+
+**The web UI's lux is `spower` × 126.7** — a coefficient hard-wired in the
+page (`get lux(){ return +(this.value * 126.7).toFixed(2); }`), no light
+sensor involved. The Illuminance sensor derives its value the same way.
+`lpd` looked like lux at low sun (53 vs 50.7) — it is not; it is the daily
+strike counter, now its own sensor.
 
 **HACS default submission** is done — [hacs/default#9780](https://github.com/hacs/default/pull/9780),
 awaiting a maintainer. No PR to home-assistant/brands was needed: the in-repo

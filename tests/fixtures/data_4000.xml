@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<status>
+	<IWS>1.3</IWS>
+	<IAS>0.6</IAS>
+	<WG>1.3</WG>
+	<WD>8</WD>
+	<PSS>OK</PSS>
+	<PRS>1006.5</PRS>
+	<THS>OK</THS>
+	<TM>11.4</TM>
+	<RH>96.7</RH>
+	<AH>9.7</AH>
+	<WC>11.4</WC>
+	<DP>10.8</DP>
+	<SSS>OK</SSS>
+	<SP>0.1</SP>
+	<UF>0.0</UF>
+	<TS>OK</TS>
+	<ST>0x6AC7C278</ST>
+	<SD>8.0</SD>
+	<SE>910.0</SE>
+	<LD>53</LD>
+	<BA>504</BA>
+	<devname>IQWS-4000</devname>
+	<systp>23.0</systp>
+	<systm>0x6AC7D679</systm>
+</status>

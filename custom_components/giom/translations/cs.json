@@ -112,6 +112,21 @@
       "lightning_energy": {
         "name": "Energie blesku"
       },
+      "lightning_per_day": {
+        "name": "Blesků za den"
+      },
+      "status_pressure": {
+        "name": "Stav čidla tlaku"
+      },
+      "status_temperature": {
+        "name": "Stav čidla teploty a vlhkosti"
+      },
+      "status_light": {
+        "name": "Stav čidla osvitu"
+      },
+      "status_lightning": {
+        "name": "Stav čidla blesku"
+      },
       "wind_direction": {
         "name": "Směr větru",
         "state": {

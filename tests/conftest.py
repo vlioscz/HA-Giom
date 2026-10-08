@@ -22,3 +22,9 @@ def status_3000() -> str:
 def status_4000() -> str:
     """status.xml with the extra fields the 4000 series reports."""
     return (FIXTURES / "status_4000.xml").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def data_4000() -> str:
+    """data.xml as a live IQWS-4000 serves it (4000 series only)."""
+    return (FIXTURES / "data_4000.xml").read_text(encoding="utf-8")

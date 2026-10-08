@@ -219,7 +219,53 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         icon="mdi:flash-alert",
         value_fn=_plain("senr"),
     ),
-    # SNMP-only below. status.xml does not carry these.
+    # A daily counter - per the manufacturer's own field comment. It resets
+    # at midnight, which is exactly what TOTAL_INCREASING is for.
+    GiomSensorDescription(
+        key="lightning_per_day",
+        source_key="lpd",
+        translation_key="lightning_per_day",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=0,
+        icon="mdi:weather-lightning",
+        value_fn=_plain("lpd"),
+    ),
+    # Sensor-health flags from data.xml (4000 series only): free text, "OK"
+    # on a healthy station. This is how a dead sensor is told apart from a
+    # genuine zero - important when automations hang off the readings.
+    GiomSensorDescription(
+        key="status_pressure",
+        source_key="status_pressure",
+        translation_key="status_pressure",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:heart-pulse",
+        value_fn=_plain("status_pressure"),
+    ),
+    GiomSensorDescription(
+        key="status_temperature",
+        source_key="status_temperature",
+        translation_key="status_temperature",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:heart-pulse",
+        value_fn=_plain("status_temperature"),
+    ),
+    GiomSensorDescription(
+        key="status_light",
+        source_key="status_light",
+        translation_key="status_light",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:heart-pulse",
+        value_fn=_plain("status_light"),
+    ),
+    GiomSensorDescription(
+        key="status_lightning",
+        source_key="status_lightning",
+        translation_key="status_lightning",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:heart-pulse",
+        value_fn=_plain("status_lightning"),
+    ),
+    # From data.xml on the 4000 series, from SNMP elsewhere.
     GiomSensorDescription(
         key="wind_speed_average",
         source_key="windspeed_average",
@@ -229,6 +275,8 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=_plain("windspeed_average"),
     ),
+    # SNMP-only: no HTTP endpoint carries it. data.xml's PRS is the same
+    # relative (QNH) figure status.xml serves - measured, not assumed.
     GiomSensorDescription(
         key="pressure_absolute",
         source_key="pressure_absolute",

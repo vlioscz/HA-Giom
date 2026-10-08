@@ -4,7 +4,9 @@ import pytest
 
 from custom_components.giom.coordinator import (
     beaufort,
+    data_xml_url,
     device_title,
+    parse_data_xml,
     parse_status,
     status_url,
     url_host,
@@ -27,7 +29,7 @@ def test_parse_3000_payload(status_3000):
     assert data["beaufort"] == 2
 
     # 4000-only fields must not materialise out of nothing
-    for key in ("spower", "uf", "illuminance", "sdist", "senr"):
+    for key in ("spower", "uf", "illuminance", "lpd", "sdist", "senr"):
         assert key not in data
 
 
@@ -45,9 +47,8 @@ def test_parse_4000_payload(status_4000):
     # rounded to two decimals.
     assert data["illuminance"] == round(512.3 * 126.7, 2)
 
-    # lpd appears in the 4000's XML but its meaning is unknown; it must be
-    # ignored, not guessed at.
-    assert "lpd" not in data
+    # Lightning strikes per day - the manufacturer's own comment for lpd.
+    assert data["lpd"] == 1018.0
 
 
 def test_comma_decimals_tolerated():
@@ -117,3 +118,29 @@ def test_url_host(host, expected):
 def test_status_url():
     assert status_url("192.168.0.100") == "http://192.168.0.100/status.xml"
     assert status_url("fe80::1") == "http://[fe80::1]/status.xml"
+    assert data_xml_url("192.168.0.100") == "http://192.168.0.100/data.xml"
+
+
+def test_parse_data_xml(data_4000):
+    data = parse_data_xml(data_4000)
+
+    assert data["windspeed_average"] == 0.6
+    assert data["status_pressure"] == "OK"
+    assert data["status_temperature"] == "OK"
+    assert data["status_light"] == "OK"
+    assert data["status_lightning"] == "OK"
+
+    # Everything else in data.xml duplicates status.xml and must be ignored,
+    # or it would silently override the primary endpoint's readings.
+    assert len(data) == 5
+
+
+def test_parse_data_xml_passes_failure_codes_through():
+    data = parse_data_xml("<status><SSS>ERR 3</SSS><IAS>n/a</IAS></status>")
+    assert data["status_light"] == "ERR 3"
+    assert "windspeed_average" not in data
+
+
+def test_parse_data_xml_malformed_raises():
+    with pytest.raises(ValueError):
+        parse_data_xml("not xml at all")

@@ -11,8 +11,18 @@ from custom_components.giom.const import CONF_COMMUNITY, CONF_USE_SNMP, DOMAIN
 HOST = "192.168.0.100"
 
 
-async def _setup(hass: HomeAssistant, aioclient_mock, payload: str) -> MockConfigEntry:
+async def _setup(
+    hass: HomeAssistant,
+    aioclient_mock,
+    payload: str,
+    data_payload: str | None = None,
+) -> MockConfigEntry:
     aioclient_mock.get(f"http://{HOST}/status.xml", text=payload)
+    # A 3000-series station has no data.xml endpoint at all.
+    if data_payload is None:
+        aioclient_mock.get(f"http://{HOST}/data.xml", status=404)
+    else:
+        aioclient_mock.get(f"http://{HOST}/data.xml", text=data_payload)
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="GIOM",
@@ -48,14 +58,15 @@ async def test_setup_creates_entities_from_payload(
     assert hass.states.get("sensor.giom_illuminance") is None
     assert hass.states.get("sensor.giom_lightning_distance") is None
 
-    # SNMP off: the SNMP-only sensors must not exist either.
+    # SNMP off and no data.xml: none of their sensors must exist either.
     assert hass.states.get("sensor.giom_average_wind_speed") is None
+    assert hass.states.get("sensor.giom_light_sensor_status") is None
 
 
 async def test_setup_creates_4000_entities(
-    hass: HomeAssistant, aioclient_mock, status_4000
+    hass: HomeAssistant, aioclient_mock, status_4000, data_4000
 ):
-    await _setup(hass, aioclient_mock, status_4000)
+    await _setup(hass, aioclient_mock, status_4000, data_payload=data_4000)
 
     assert hass.states.get("sensor.giom_sunlight_intensity").state == "512.3"
     assert hass.states.get("sensor.giom_uv_factor").state == "3.2"
@@ -71,6 +82,20 @@ async def test_setup_creates_4000_entities(
     lightning = hass.states.get("sensor.giom_lightning_distance")
     assert lightning.state == "12.0"
     assert "state_class" not in lightning.attributes
+
+    # The daily strike counter comes from status.xml's lpd field.
+    assert hass.states.get("sensor.giom_lightning_strikes_per_day").state == "1018.0"
+
+    # data.xml extras: average wind speed over HTTP (SNMP is off here) and
+    # the four sensor-health flags.
+    assert hass.states.get("sensor.giom_average_wind_speed").state == "0.6"
+    assert hass.states.get("sensor.giom_pressure_sensor_status").state == "OK"
+    assert (
+        hass.states.get("sensor.giom_temperature_humidity_sensor_status").state
+        == "OK"
+    )
+    assert hass.states.get("sensor.giom_light_sensor_status").state == "OK"
+    assert hass.states.get("sensor.giom_lightning_sensor_status").state == "OK"
 
 
 async def test_unique_ids_are_stable(

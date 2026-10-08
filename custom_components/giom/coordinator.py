@@ -20,6 +20,7 @@ from .const import (
     COMPASS_POINTS,
     CONF_COMMUNITY,
     CONF_USE_SNMP,
+    DATA_PATH,
     DEFAULT_COMMUNITY,
     DEFAULT_SCAN_INTERVAL,
     DEGREES_PER_STEP,
@@ -56,7 +57,21 @@ _NUMERIC_FIELDS = (
     "uf",  # UV factor
     "sdist",  # distance of the last lightning strike, km
     "senr",  # energy of the last lightning strike
+    "lpd",  # lightning strikes per day; the manufacturer's own field comment
 )
+
+# data.xml - the 4000-series' second endpoint, which the station's own web UI
+# polls. Mostly the same readings under short keys, but two things exist
+# nowhere else: the average wind speed and the sensor-health flags.
+_DATA_NUMERIC_FIELDS = {
+    "IAS": "windspeed_average",
+}
+_DATA_STATUS_FIELDS = {
+    "PSS": "status_pressure",
+    "THS": "status_temperature",
+    "SSS": "status_light",
+    "TS": "status_lightning",
+}
 
 
 def url_host(host: str) -> str:
@@ -68,6 +83,11 @@ def url_host(host: str) -> str:
 def status_url(host: str) -> str:
     """Build the status.xml URL for a host."""
     return f"http://{url_host(host)}{STATUS_PATH}"
+
+
+def data_xml_url(host: str) -> str:
+    """Build the data.xml URL for a host."""
+    return f"http://{url_host(host)}{DATA_PATH}"
 
 
 def device_title(devname: str | None) -> str:
@@ -140,6 +160,39 @@ def parse_status(payload: str) -> dict[str, Any]:
     return data
 
 
+def parse_data_xml(payload: str) -> dict[str, Any]:
+    """Turn a data.xml document into a flat dict of values.
+
+    Only the keys status.xml does not carry are taken; the rest would just
+    duplicate readings already parsed. Kept free of Home Assistant imports so
+    it can be exercised on its own.
+    """
+    try:
+        root = ElementTree.fromstring(payload)
+    except ElementTree.ParseError as err:
+        raise ValueError(f"malformed data.xml: {err}") from err
+
+    raw = {child.tag: (child.text or "").strip() for child in root}
+    data: dict[str, Any] = {}
+
+    for tag, key in _DATA_NUMERIC_FIELDS.items():
+        value = raw.get(tag)
+        if not value:
+            continue
+        try:
+            data[key] = float(value.replace(",", "."))
+        except ValueError:
+            _LOGGER.debug("Ignoring non-numeric %s=%r", tag, value)
+
+    # Sensor-health flags are free text ("OK" on a healthy station); pass
+    # them through untouched so a failure code shows up exactly as sent.
+    for tag, key in _DATA_STATUS_FIELDS.items():
+        if value := raw.get(tag):
+            data[key] = value
+
+    return data
+
+
 class GiomCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Fetch station readings on a schedule."""
 
@@ -161,6 +214,8 @@ class GiomCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self._session = async_get_clientsession(hass)
         self._snmp_failures = 0
+        # None until the first poll settles whether this station serves it.
+        self._data_xml_works: bool | None = None
 
         super().__init__(
             hass,
@@ -189,19 +244,58 @@ class GiomCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not data:
             raise UpdateFailed("status.xml contained no usable readings")
 
+        data.update(await self._async_fetch_data_xml())
+
         if self.use_snmp:
-            data.update(await self._async_fetch_snmp())
+            data.update(
+                await self._async_fetch_snmp(
+                    skip_average="windspeed_average" in data
+                )
+            )
 
         return data
 
-    async def _async_fetch_snmp(self) -> dict[str, Any]:
-        """Read the two values status.xml does not carry.
+    async def _async_fetch_data_xml(self) -> dict[str, Any]:
+        """Read the sensor-health flags and average wind speed.
 
-        SNMP is a bonus, never a reason to fail the whole update - if it stops
-        answering the HTTP readings still go through.
+        Only the 4000 series serves data.xml; a 3000 answers 404 and simply
+        never grows the matching entities. Like SNMP, this is a bonus - it
+        must never fail the whole update.
         """
         try:
-            extras = await self.hass.async_add_executor_job(self._fetch_snmp)
+            async with self._session.get(
+                data_xml_url(self.host), timeout=REQUEST_TIMEOUT
+            ) as response:
+                response.raise_for_status()
+                payload = await response.text()
+            extras = parse_data_xml(payload)
+        except (ClientError, TimeoutError, ValueError) as err:
+            if self._data_xml_works:
+                _LOGGER.warning(
+                    "data.xml on %s stopped answering (%s); sensor-health "
+                    "flags are unavailable until it recovers",
+                    self.host,
+                    err,
+                )
+            elif self._data_xml_works is None:
+                _LOGGER.debug("No data.xml on %s: %s", self.host, err)
+            self._data_xml_works = False
+            return {}
+
+        self._data_xml_works = True
+        return extras
+
+    async def _async_fetch_snmp(self, skip_average: bool = False) -> dict[str, Any]:
+        """Read what no HTTP endpoint carries.
+
+        That is just the absolute pressure when data.xml already supplied the
+        wind-speed average. SNMP is a bonus, never a reason to fail the whole
+        update - if it stops answering the HTTP readings still go through.
+        """
+        try:
+            extras = await self.hass.async_add_executor_job(
+                self._fetch_snmp, skip_average
+            )
         except SnmpError as err:
             self._snmp_failures += 1
             if self._snmp_failures in (1, 10):
@@ -217,15 +311,16 @@ class GiomCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._snmp_failures = 0
         return extras
 
-    def _fetch_snmp(self) -> dict[str, Any]:
+    def _fetch_snmp(self, skip_average: bool) -> dict[str, Any]:
         """Blocking SNMP reads, run in an executor."""
         extras: dict[str, Any] = {}
 
-        average = get_float(
-            self.host, OID_WIND_SPEED_AVERAGE, self.community, request_id=11
-        )
-        if average is not None:
-            extras["windspeed_average"] = average
+        if not skip_average:
+            average = get_float(
+                self.host, OID_WIND_SPEED_AVERAGE, self.community, request_id=11
+            )
+            if average is not None:
+                extras["windspeed_average"] = average
 
         absolute = get_float(
             self.host, OID_ABSOLUTE_PRESSURE, self.community, request_id=12

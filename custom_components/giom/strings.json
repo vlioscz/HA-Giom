@@ -132,6 +132,21 @@
       },
       "lightning_energy": {
         "name": "Lightning energy"
+      },
+      "lightning_per_day": {
+        "name": "Lightning strikes per day"
+      },
+      "status_pressure": {
+        "name": "Pressure sensor status"
+      },
+      "status_temperature": {
+        "name": "Temperature/humidity sensor status"
+      },
+      "status_light": {
+        "name": "Light sensor status"
+      },
+      "status_lightning": {
+        "name": "Lightning sensor status"
       }
     }
   }

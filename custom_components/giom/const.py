@@ -19,6 +19,10 @@ MAX_SCAN_INTERVAL: Final = 3600
 
 STATUS_PATH: Final = "/status.xml"
 
+# Second endpoint, served by the 4000 series only. Short keys, and it is the
+# only place the station reports its sensor-health flags (PSS/THS/SSS/TS).
+DATA_PATH: Final = "/data.xml"
+
 # The station answers SNMP only on OIDs carrying a leading zero. The plain
 # 1.3.6.1.4.1.21287... form returns noSuchName - verified against firmware
 # 1.0.3. This is not a typo.
