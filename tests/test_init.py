@@ -87,8 +87,9 @@ async def test_setup_creates_4000_entities(
     assert hass.states.get("sensor.giom_lightning_strikes_per_day").state == "1018.0"
 
     # data.xml extras: average wind speed over HTTP (SNMP is off here) and
-    # the four sensor-health flags.
-    assert hass.states.get("sensor.giom_average_wind_speed").state == "0.6"
+    # the four sensor-health flags. Home Assistant's metric unit system
+    # presents wind speeds in km/h, so 0.6 m/s reads back as 2.16.
+    assert hass.states.get("sensor.giom_average_wind_speed").state == "2.16"
     assert hass.states.get("sensor.giom_pressure_sensor_status").state == "OK"
     assert (
         hass.states.get("sensor.giom_temperature_humidity_sensor_status").state
