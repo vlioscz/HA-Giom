@@ -189,16 +189,16 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         icon="mdi:sun-wireless",
         value_fn=_plain("uf"),
     ),
-    # The manual leaves "lpd" unexplained; checked against a live IQWS-4000,
-    # it tracks the illuminance the station's own web UI reports in lux.
+    # Derived from spower by the coordinator, exactly the way the station's
+    # own web UI computes its lux figure. See LUX_PER_WATT in const.py.
     GiomSensorDescription(
         key="illuminance",
-        source_key="lpd",
+        source_key="illuminance",
         translation_key="illuminance",
         device_class=SensorDeviceClass.ILLUMINANCE,
         native_unit_of_measurement=LIGHT_LUX,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=_plain("lpd"),
+        value_fn=_plain("illuminance"),
     ),
     # No state_class on the lightning pair: "the last strike" is an event
     # reading, not a continuous quantity, and long-term statistics over it

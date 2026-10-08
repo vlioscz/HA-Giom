@@ -27,7 +27,7 @@ def test_parse_3000_payload(status_3000):
     assert data["beaufort"] == 2
 
     # 4000-only fields must not materialise out of nothing
-    for key in ("spower", "uf", "lpd", "sdist", "senr"):
+    for key in ("spower", "uf", "illuminance", "sdist", "senr"):
         assert key not in data
 
 
@@ -36,11 +36,18 @@ def test_parse_4000_payload(status_4000):
 
     assert data["spower"] == 512.3
     assert data["uf"] == 3.2
-    assert data["lpd"] == 1018.0
     assert data["sdist"] == 12.0
     assert data["senr"] == 8541.0
     assert data["wind_bearing"] == 292.5
     assert data["wind_direction"] == "wnw"
+
+    # Derived the same way the station's web UI does: spower x 126.7,
+    # rounded to two decimals.
+    assert data["illuminance"] == round(512.3 * 126.7, 2)
+
+    # lpd appears in the 4000's XML but its meaning is unknown; it must be
+    # ignored, not guessed at.
+    assert "lpd" not in data
 
 
 def test_comma_decimals_tolerated():

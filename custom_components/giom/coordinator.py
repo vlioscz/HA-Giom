@@ -23,6 +23,7 @@ from .const import (
     DEFAULT_COMMUNITY,
     DEFAULT_SCAN_INTERVAL,
     DEGREES_PER_STEP,
+    LUX_PER_WATT,
     OID_ABSOLUTE_PRESSURE,
     OID_WIND_SPEED_AVERAGE,
     STATUS_PATH,
@@ -53,7 +54,6 @@ _NUMERIC_FIELDS = (
     # simply omits them and the matching entities are never created.
     "spower",  # sunlight intensity, W/m2
     "uf",  # UV factor
-    "lpd",  # illuminance, lx - verified live on an IQWS-4000
     "sdist",  # distance of the last lightning strike, km
     "senr",  # energy of the last lightning strike
 )
@@ -130,6 +130,12 @@ def parse_status(payload: str) -> dict[str, Any]:
 
     if (speed := data.get("windspeed")) is not None:
         data["beaufort"] = beaufort(speed)
+
+    # The station's web UI shows lux as solar power times a hard-wired
+    # coefficient - there is no separate light sensor. Matching its
+    # two-decimal rounding keeps this value identical to the station's page.
+    if (spower := data.get("spower")) is not None:
+        data["illuminance"] = round(spower * LUX_PER_WATT, 2)
 
     return data
 

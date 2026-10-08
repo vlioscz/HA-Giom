@@ -68,7 +68,7 @@ Be careful not to present the second column as fact.
 | OIDs `.19`–`.23` absent on a GIOM 3000 | ✅ measured (`noSuchName`) |
 | GIOM 4000 / IQWS-4000 works | ✅ verified live on an IQWS-4000 (2026-10) |
 | `spower`, `uf`, `sdist`, `senr` field names | ✅ seen live on an IQWS-4000 |
-| `lpd` is illuminance in lux | ✅ verified against the station's own web UI |
+| Web-UI lux = `spower` × 126.7, no light sensor involved | ✅ read from the page source |
 | Config flow behaves in a running Home Assistant | 🟡 covered by tests, never run against real hardware |
 | Options flow, reload-on-change | 🟡 covered by tests, never run against real hardware |
 
@@ -236,11 +236,30 @@ SNMP auto-probe verdict, and whether the entry title comes out as `GIOM`.
 
 **Read the station's speed-unit setting** rather than assuming m/s.
 
-**Consider `stime`.** It appears in the 4000's XML as a lightning timestamp
-documented as "UTC hex"; not implemented. Its sibling `lpd` turned out to be
-illuminance in lux — the manual never says so, but it matches the value the
-station's own web UI labels in lux (verified live on an IQWS-4000, 2026-10) —
-and is exposed as the Illuminance sensor.
+**Read the sensor-status fields.** The IQWS-4000 web UI source maps its
+fields with the manufacturer's own (Czech) comments:
+
+| key | meaning | key | meaning |
+|---|---|---|---|
+| SP | solar power W/m² | SD | lightning distance, km |
+| UF | UV factor | SE | lightning energy |
+| SSS | light-sensor status | TS | lightning-sensor status |
+| | | ST | time of last event (UTC ticks) |
+
+`SSS` and `TS` are health flags — the way to tell a dead sensor from a
+genuine zero, which matters when covers hang off the illuminance value. Not
+implemented yet because the matching `status.xml` tag names are unknown
+(the XML uses long names: SP → `spower`, SD → `sdist`, SE → `senr`,
+ST → `stime`); grab a live `status.xml` from the IQWS-4000 to find them.
+`stime` itself is also still unimplemented.
+
+**`lpd` remains unexplained.** It is present in the 4000's XML (53 while
+spower was 0.4; the manual shows 1018 at spower 110) but matches neither the
+lux formula nor anything else identified so far. The web UI's lux is purely
+`spower` × 126.7 — a coefficient hard-wired in the page
+(`get lux(){ return +(this.value * 126.7).toFixed(2); }`), which is exactly
+how the Illuminance sensor now derives its value. `lpd` is deliberately not
+read.
 
 **HACS default submission** is done — [hacs/default#9780](https://github.com/hacs/default/pull/9780),
 awaiting a maintainer. No PR to home-assistant/brands was needed: the in-repo

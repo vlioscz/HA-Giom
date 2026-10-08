@@ -32,6 +32,11 @@ OID_TEMPERATURE: Final = f"{OID_PREFIX}.14.0"
 # degree reading: index 3 -> 67.5 deg.
 DEGREES_PER_STEP: Final = 22.5
 
+# The station has no illuminance sensor. Its web UI derives lux from the
+# solar-power reading with this coefficient hard-wired in the page source:
+# get lux(){ return +(this.value * 126.7).toFixed(2); }
+LUX_PER_WATT: Final = 126.7
+
 COMPASS_POINTS: Final = [
     "n",
     "nne",

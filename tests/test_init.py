@@ -61,8 +61,9 @@ async def test_setup_creates_4000_entities(
     assert hass.states.get("sensor.giom_uv_factor").state == "3.2"
     assert hass.states.get("sensor.giom_lightning_energy").state == "8541.0"
 
+    # Illuminance mirrors the station web UI: spower x 126.7, two decimals.
     illuminance = hass.states.get("sensor.giom_illuminance")
-    assert illuminance.state == "1018.0"
+    assert illuminance.state == "64908.41"
     assert illuminance.attributes["device_class"] == "illuminance"
     assert illuminance.attributes["unit_of_measurement"] == "lx"
 
