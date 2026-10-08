@@ -27,7 +27,7 @@ def test_parse_3000_payload(status_3000):
     assert data["beaufort"] == 2
 
     # 4000-only fields must not materialise out of nothing
-    for key in ("spower", "uf", "sdist", "senr"):
+    for key in ("spower", "uf", "lpd", "sdist", "senr"):
         assert key not in data
 
 
@@ -36,6 +36,7 @@ def test_parse_4000_payload(status_4000):
 
     assert data["spower"] == 512.3
     assert data["uf"] == 3.2
+    assert data["lpd"] == 1018.0
     assert data["sdist"] == 12.0
     assert data["senr"] == 8541.0
     assert data["wind_bearing"] == 292.5

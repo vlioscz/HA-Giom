@@ -45,6 +45,7 @@ async def test_setup_creates_entities_from_payload(
     # 3000-series payload carries no light or lightning readings, so those
     # entities must not exist at all - not even as unavailable.
     assert hass.states.get("sensor.giom_sunlight_intensity") is None
+    assert hass.states.get("sensor.giom_illuminance") is None
     assert hass.states.get("sensor.giom_lightning_distance") is None
 
     # SNMP off: the SNMP-only sensors must not exist either.
@@ -59,6 +60,11 @@ async def test_setup_creates_4000_entities(
     assert hass.states.get("sensor.giom_sunlight_intensity").state == "512.3"
     assert hass.states.get("sensor.giom_uv_factor").state == "3.2"
     assert hass.states.get("sensor.giom_lightning_energy").state == "8541.0"
+
+    illuminance = hass.states.get("sensor.giom_illuminance")
+    assert illuminance.state == "1018.0"
+    assert illuminance.attributes["device_class"] == "illuminance"
+    assert illuminance.attributes["unit_of_measurement"] == "lx"
 
     # Event-like readings: no state_class, so no long-term statistics.
     lightning = hass.states.get("sensor.giom_lightning_distance")

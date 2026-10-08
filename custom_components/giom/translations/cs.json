@@ -103,6 +103,9 @@
       "uv_factor": {
         "name": "UV faktor"
       },
+      "illuminance": {
+        "name": "Osvětlenost"
+      },
       "lightning_distance": {
         "name": "Vzdálenost blesku"
       },

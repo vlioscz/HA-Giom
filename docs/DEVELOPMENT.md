@@ -66,8 +66,9 @@ Be careful not to present the second column as fact.
 | `winddir` is an index 0–15, degrees = `× 22.5` | ✅ measured against OID `.9` |
 | Values use a decimal point on fw 1.0.3 | ✅ measured |
 | OIDs `.19`–`.23` absent on a GIOM 3000 | ✅ measured (`noSuchName`) |
-| GIOM 4000 / IQWS-4000 works | 🟡 from the manufacturer's manual only |
-| `spower`, `uf`, `sdist`, `senr` field names | 🟡 from the manual, never seen live |
+| GIOM 4000 / IQWS-4000 works | ✅ verified live on an IQWS-4000 (2026-10) |
+| `spower`, `uf`, `sdist`, `senr` field names | ✅ seen live on an IQWS-4000 |
+| `lpd` is illuminance in lux | ✅ verified against the station's own web UI |
 | Config flow behaves in a running Home Assistant | 🟡 covered by tests, never run against real hardware |
 | Options flow, reload-on-change | 🟡 covered by tests, never run against real hardware |
 
@@ -233,14 +234,13 @@ change; `brands/README.md` says so too.
 only significant path never executed. Watch for: the duplicate-host abort, the
 SNMP auto-probe verdict, and whether the entry title comes out as `GIOM`.
 
-**Find a 4000-series unit.** Would move four sensors and the compatibility
-claim from assumed to verified.
-
 **Read the station's speed-unit setting** rather than assuming m/s.
 
-**Consider `stime` and `lpd`.** Both appear in the 4000's XML; `stime` is a
-lightning timestamp documented as "UTC hex" and `lpd` is unexplained. Neither
-is implemented.
+**Consider `stime`.** It appears in the 4000's XML as a lightning timestamp
+documented as "UTC hex"; not implemented. Its sibling `lpd` turned out to be
+illuminance in lux — the manual never says so, but it matches the value the
+station's own web UI labels in lux (verified live on an IQWS-4000, 2026-10) —
+and is exposed as the Illuminance sensor.
 
 **HACS default submission** is done — [hacs/default#9780](https://github.com/hacs/default/pull/9780),
 awaiting a maintainer. No PR to home-assistant/brands was needed: the in-repo

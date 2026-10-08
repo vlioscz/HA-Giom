@@ -53,6 +53,7 @@ _NUMERIC_FIELDS = (
     # simply omits them and the matching entities are never created.
     "spower",  # sunlight intensity, W/m2
     "uf",  # UV factor
+    "lpd",  # illuminance, lx - verified live on an IQWS-4000
     "sdist",  # distance of the last lightning strike, km
     "senr",  # energy of the last lightning strike
 )

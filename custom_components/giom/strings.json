@@ -124,6 +124,9 @@
       "uv_factor": {
         "name": "UV factor"
       },
+      "illuminance": {
+        "name": "Illuminance"
+      },
       "lightning_distance": {
         "name": "Lightning distance"
       },

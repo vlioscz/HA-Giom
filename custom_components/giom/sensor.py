@@ -15,6 +15,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     DEGREE,
     CONCENTRATION_GRAMS_PER_CUBIC_METER,
+    LIGHT_LUX,
     PERCENTAGE,
     EntityCategory,
     UnitOfIrradiance,
@@ -168,9 +169,9 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_plain("systemp"),
     ),
-    # Reported only by the IQWS-4000 / GIOM 4000NG. Field names come from the
-    # manufacturer's manual and have not been checked against real hardware -
-    # on a GIOM 3000 these keys never appear, so no entity is created.
+    # Reported only by the IQWS-4000 / GIOM 4000NG, verified live on an
+    # IQWS-4000 - on a GIOM 3000 these keys never appear, so no entity is
+    # created.
     GiomSensorDescription(
         key="irradiance",
         source_key="spower",
@@ -187,6 +188,17 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:sun-wireless",
         value_fn=_plain("uf"),
+    ),
+    # The manual leaves "lpd" unexplained; checked against a live IQWS-4000,
+    # it tracks the illuminance the station's own web UI reports in lux.
+    GiomSensorDescription(
+        key="illuminance",
+        source_key="lpd",
+        translation_key="illuminance",
+        device_class=SensorDeviceClass.ILLUMINANCE,
+        native_unit_of_measurement=LIGHT_LUX,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_plain("lpd"),
     ),
     # No state_class on the lightning pair: "the last strike" is an event
     # reading, not a continuous quantity, and long-term statistics over it
