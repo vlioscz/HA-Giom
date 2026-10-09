@@ -18,6 +18,7 @@ from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
     EntityCategory,
+    UnitOfEnergy,
     UnitOfIrradiance,
     UnitOfLength,
     UnitOfPressure,
@@ -212,10 +213,14 @@ SENSORS: tuple[GiomSensorDescription, ...] = (
         icon="mdi:flash",
         value_fn=_plain("sdist"),
     ),
+    # kWh per the owner's finding; the manufacturer's own field comment
+    # claims "dimensionless". Deliberately no ENERGY device class - a strike
+    # is not consumption and has no business in the energy dashboard.
     GiomSensorDescription(
         key="lightning_energy",
         source_key="senr",
         translation_key="lightning_energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         icon="mdi:flash-alert",
         value_fn=_plain("senr"),
     ),

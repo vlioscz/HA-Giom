@@ -74,6 +74,7 @@ Be careful not to present the second column as fact.
 | data.xml `PRS` is the relative pressure, not the absolute | ✅ measured (1006.5 vs 952) |
 | Beaufort bounds 0.5/1.5/3.3/… strict, north = 360.0° not 0° | ✅ from the web UI source |
 | `stime`/`ST`/`systm` are hexadecimal **unix** time | ✅ matched against the clock |
+| `senr` lightning energy is in **kWh** | ✅ per the owner, despite the manufacturer's "dimensionless" comment |
 | 4000 XML speeds are always m/s; unit switching is client-side JS | ✅ from the web UI source |
 | Config flow behaves in a running Home Assistant | 🟡 covered by tests, never run against real hardware |
 | Options flow, reload-on-change | 🟡 covered by tests, never run against real hardware |

@@ -70,7 +70,12 @@ async def test_setup_creates_4000_entities(
 
     assert hass.states.get("sensor.giom_sunlight_intensity").state == "512.3"
     assert hass.states.get("sensor.giom_uv_factor").state == "3.2"
-    assert hass.states.get("sensor.giom_lightning_energy").state == "8541.0"
+    lightning_energy = hass.states.get("sensor.giom_lightning_energy")
+    assert lightning_energy.state == "8541.0"
+    assert lightning_energy.attributes["unit_of_measurement"] == "kWh"
+    # Not an ENERGY device class on purpose - it must stay out of the
+    # energy dashboard.
+    assert "device_class" not in lightning_energy.attributes
 
     # Illuminance mirrors the station web UI: spower x 126.7, two decimals.
     illuminance = hass.states.get("sensor.giom_illuminance")
