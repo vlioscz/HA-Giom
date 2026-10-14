@@ -110,6 +110,25 @@ async def test_setup_creates_4000_entities(
     assert hass.states.get("sensor.giom_lightning_sensor_status").state == "OK"
 
 
+async def test_entities_appear_when_fields_show_up_late(
+    hass: HomeAssistant, aioclient_mock, status_3000, status_4000, data_4000
+):
+    """Lightning fields are absent until the first strike ever recorded."""
+    entry = await _setup(hass, aioclient_mock, status_3000)
+    assert hass.states.get("sensor.giom_lightning_distance") is None
+    assert hass.states.get("sensor.giom_light_sensor_status") is None
+
+    # The station starts reporting the extra fields later on.
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(f"http://{HOST}/status.xml", text=status_4000)
+    aioclient_mock.get(f"http://{HOST}/data.xml", text=data_4000)
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.giom_lightning_distance").state == "12.0"
+    assert hass.states.get("sensor.giom_light_sensor_status").state == "OK"
+
+
 async def test_unique_ids_are_stable(
     hass: HomeAssistant, aioclient_mock, status_3000
 ):

@@ -16,9 +16,8 @@ Local polling only — no cloud, no account, nothing leaves your network.
 | Model | Status |
 |---|---|
 | GIOM 3000AE | ✅ verified on firmware 1.0.3 |
-| IQWS-4000 | ✅ verified live |
+| GIOM 4000NG / IQWS-4000 | ✅ verified on firmware 2.0.3 — including sunlight, UV and the lightning readings, confirmed through a real storm |
 | GIOM 3000 | 🟡 expected to work (same family) — [reports welcome][issues] |
-| GIOM 4000NG | 🟡 expected to work (same family as IQWS-4000) — [reports welcome][issues] |
 
 The 4000 series shares the same interface: its manual states *"M2M protocol
 compatibility with previous model GIOM 3000"*, and both models serve the same
@@ -32,7 +31,7 @@ fewer sensors than a 4000.
 
 ## What you get
 
-One device with up to nineteen sensors, all with proper device classes and
+One device with up to twenty-six sensors, all with proper device classes and
 long-term statistics.
 
 | Sensor | Unit | Source |
@@ -50,17 +49,22 @@ long-term statistics.
 | Beaufort force | Bft | derived |
 | Barometric altitude | m | HTTP, diagnostic |
 | Electronics temperature | °C | HTTP, diagnostic |
-| Average wind speed | m/s | SNMP |
+| Average wind speed | m/s | HTTP *(4000)*, SNMP otherwise |
 | Absolute pressure | hPa | SNMP, diagnostic |
 | Sunlight intensity | W/m² | HTTP, 4000 only |
+| Illuminance | lx | derived, 4000 only |
 | UV factor | — | HTTP, 4000 only |
 | Lightning distance | km | HTTP, 4000 only |
-| Lightning energy | — | HTTP, 4000 only |
+| Lightning energy | kWh | HTTP, 4000 only |
+| Lightning strikes per day | — | HTTP, 4000 only |
+| Last lightning strike | timestamp | HTTP, 4000 only |
+| Sensor health × 4 *(pressure, temp/humidity, light, lightning)* | text | HTTP, 4000 only, diagnostic |
 
-Readings come from a single HTTP request to `status.xml`. Two values that file
-does not carry are fetched over SNMP; that is detected automatically during
-setup and can be switched off later. SNMP failures never take the HTTP
-readings down with them.
+Readings come from an HTTP request to `status.xml`; on the 4000 series a
+second request to `data.xml` adds the sensor-health flags and the average
+wind speed. The absolute pressure is the one value that still needs SNMP —
+detected automatically during setup, switchable later, and SNMP failures
+never take the HTTP readings down with them.
 
 ## Installation
 
@@ -86,7 +90,7 @@ Options you can change later:
 
 | Option | Default | Notes |
 |---|---|---|
-| Polling interval | 30 s | 10–3600 s |
+| Polling interval | 30 s | 10–3600 s. The station itself samples every 1–10 s (*Refresh Interval* in its manual), so even the 10 s minimum reads fresh data and wastes nothing |
 | Read extra values over SNMP | auto-detected | Needs SNMP enabled on the station |
 | SNMP community | `public` | Only used when SNMP is on |
 
@@ -102,6 +106,11 @@ absolute figure is available as a separate sensor when SNMP is enabled.
 **Wind gust is not a rolling window.** The station reports the maximum since
 the previous read and then resets. At a 30-second interval you get the maximum
 over the last 30 seconds.
+
+**Lightning entities appear after the first strike.** The station leaves the
+lightning fields out of `status.xml` entirely until it has ever recorded one,
+so a brand-new 4000 starts without them. The integration adds the entities the
+moment the fields first show up — no reload needed.
 
 **Mount the station facing magnetic north**, otherwise wind direction is
 meaningless.
@@ -131,8 +140,12 @@ For anyone building their own tooling, `status.xml` is served on port 80 with
 ```
 
 `winddir` is an index 0–15 on a 16-point compass rose, not a bearing —
-degrees are `winddir × 22.5`, with 0 pointing north. The 4000 series adds
-`spower`, `uf`, `stime`, `sdist`, `senr` and `lpd`.
+degrees are `winddir × 22.5`, with north reported as 360°. The 4000 series
+adds `spower`, `uf`, `stime`, `sdist`, `senr` and `lpd` — once each has ever
+had something to report — plus a second endpoint, `/data.xml`, with the
+sensor-health flags. The complete 4000-series field map, with the
+manufacturer's own comments and the web UI's unit-conversion coefficients,
+lives in [`docs/iqws4000-protocol.md`](docs/iqws4000-protocol.md).
 
 SNMP v1, prefix `0.1.3.6.1.4.1.21287.15.`, suffix `.0`:
 
@@ -150,11 +163,15 @@ SNMP v1, prefix `0.1.3.6.1.4.1.21287.15.`, suffix `.0`:
 | `.10` | Beaufort | | | |
 | `.11` | Saturated steam pressure | | | |
 
-On a GIOM 3000AE the labels in `.8` are mangled — `NEE` for index 3, `NWW`
-for index 13, where `ENE` and `WNW` are meant. `.11` does vary, but its
-readings match neither saturated vapour pressure for the reported temperature
-nor any consistent scaling of it. This integration uses neither OID; wind
-direction is derived from the index instead.
+The direction labels are mangled across the whole family — `NEE`, `EES`,
+`SWW`, `NWW` for indices 3, 5, 11 and 13, where `ENE`, `ESE`, `WSW` and `WNW`
+are meant. A GIOM 3000AE sends them in OID `.8`, and the 4000's own web UI
+shows the same letters, while the index in the XML stays correct. `.11` does
+vary, but its readings match neither saturated vapour pressure for the
+reported temperature nor any consistent scaling of it. This integration uses
+neither OID; wind direction is derived from the index, with standard
+abbreviations — expect Home Assistant and the station's page to disagree on
+those four labels.
 
 ## Without HACS, without a custom component
 

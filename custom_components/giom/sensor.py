@@ -310,17 +310,29 @@ async def async_setup_entry(
     """Create entities for whatever this particular station reports.
 
     Models differ in what they expose - the 3000AE has no light or lightning
-    sensors, for instance - so entities are created only for keys that showed
-    up in the first poll.
+    sensors, for instance - so entities are created only for keys the station
+    actually sends. Some keys show up late: the lightning fields are omitted
+    from status.xml until the first strike is ever recorded, so every poll is
+    allowed to grow new entities, not just the first one.
     """
     coordinator = entry.runtime_data
-    available = set(coordinator.data)
+    known: set[str] = set()
 
-    async_add_entities(
-        GiomSensor(coordinator, description)
-        for description in SENSORS
-        if description.source_key in available
-    )
+    def _sync_entities() -> None:
+        available = set(coordinator.data)
+        new = [
+            description
+            for description in SENSORS
+            if description.key not in known and description.source_key in available
+        ]
+        if new:
+            known.update(description.key for description in new)
+            async_add_entities(
+                GiomSensor(coordinator, description) for description in new
+            )
+
+    _sync_entities()
+    entry.async_on_unload(coordinator.async_add_listener(_sync_entities))
 
 
 class GiomSensor(CoordinatorEntity[GiomCoordinator], SensorEntity):

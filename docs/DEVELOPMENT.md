@@ -191,13 +191,17 @@ against how often SNMP libraries break on Home Assistant upgrades.
 
 ### Entities come from the payload, not from a model table
 
-`sensor.py` creates an entity only when its `source_key` appeared in the first
-poll. That is what lets one codebase serve a GIOM 3000 and a 4000 without
-branching on model strings, and it is why the 4000-only fields can ship
-unverified: on hardware that does not report them, nothing is created.
+`sensor.py` creates an entity only when its `source_key` is present in the
+coordinator data. That is what lets one codebase serve a GIOM 3000 and a 4000
+without branching on model strings, and it is why the 4000-only fields could
+ship unverified: on hardware that does not report them, nothing is created.
 
-The trade-off: a station that is briefly unhealthy at setup time could come up
-with sensors missing until the entry is reloaded.
+Creation is not limited to the first poll: a coordinator listener keeps
+adding entities whenever a key shows up later. That matters in practice —
+the station omits the lightning fields from `status.xml` entirely until the
+first strike is ever recorded, so on a fresh 4000 they appear mid-season. It
+also means a station that was briefly unhealthy at setup time heals itself
+without a reload.
 
 ### Device name is deliberately shortened
 
@@ -260,6 +264,12 @@ binary sensors.
 
 **`systm`** (the station's own clock, hex unix time in data.xml) is the only
 field left unimplemented — useful at most for detecting clock drift.
+
+**The station can push.** Per the manual it can send readings on its own: UDP
+datagrams in the GIOM3000 format (ports 1024 and up) and an HTTP GET callback
+carrying 14 fields. A possible future local-push path instead of polling —
+but note `field1` of the push payload is the *average* wind speed; the
+instantaneous speed is not in it, so polling could not be dropped entirely.
 
 ### The data.xml endpoint (4000 series)
 
