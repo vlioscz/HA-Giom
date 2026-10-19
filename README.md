@@ -70,10 +70,13 @@ never take the HTTP readings down with them.
 
 ### HACS
 
-1. HACS → ⋮ → **Custom repositories**
-2. Add `https://github.com/vlioscz/HA-Giom`, category **Integration**
-3. Install **GIOM weather station**, then restart Home Assistant
-4. **Settings → Devices & services → Add integration → GIOM**
+The integration is in the HACS default store:
+
+[![Open your Home Assistant instance and open the repository inside HACS.][myha-badge]][myha-url]
+
+1. HACS → search for **GIOM weather station** → install
+2. Restart Home Assistant
+3. **Settings → Devices & services → Add integration → GIOM**
 
 ### Manual
 
@@ -181,10 +184,10 @@ You lose the UI setup, the device grouping and the automatic model detection.
 
 ## Česky
 
-Integrace pro meteostanice GIOM. Instalace přes HACS jako vlastní repozitář,
-pak **Nastavení → Zařízení a služby → Přidat integraci → GIOM**. Zadáš adresu
-stanice a hotovo — zbytek se rozpozná sám, včetně toho, jestli má stanice
-zapnuté SNMP.
+Integrace pro meteostanice GIOM. Je v oficiálním katalogu HACS — stačí ji tam
+vyhledat a nainstalovat, pak **Nastavení → Zařízení a služby → Přidat
+integraci → GIOM**. Zadáš adresu stanice a hotovo — zbytek se rozpozná sám,
+včetně toho, jestli má stanice zapnuté SNMP.
 
 Rozhraní je česky. Za pozornost stojí, že údaj *Tlak* je přepočtený na
 nadmořskou výšku nastavenou ve stanici, ne to, co barometr naměřil — pokud ji
@@ -214,8 +217,10 @@ Device names are trademarks of their respective owners.
 [issues]: https://github.com/vlioscz/HA-Giom/issues
 [release-badge]: https://img.shields.io/github/v/release/vlioscz/HA-Giom
 [release-url]: https://github.com/vlioscz/HA-Giom/releases/latest
-[hacs-badge]: https://img.shields.io/badge/HACS-custom-41BDF5.svg
+[hacs-badge]: https://img.shields.io/badge/HACS-default-41BDF5.svg
 [hacs-url]: https://hacs.xyz/
+[myha-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
+[myha-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=vlioscz&repository=HA-Giom&category=integration
 [validate-badge]: https://github.com/vlioscz/HA-Giom/actions/workflows/validate.yml/badge.svg
 [validate-url]: https://github.com/vlioscz/HA-Giom/actions/workflows/validate.yml
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg

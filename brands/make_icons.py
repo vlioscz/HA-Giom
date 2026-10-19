@@ -1,4 +1,7 @@
-"""Render the brand PNGs for the Home Assistant brands repository.
+"""Render the brand PNGs straight into custom_components/giom/brand/.
+
+That in-tree copy is the only one HACS reads, so the PNGs live nowhere else
+(the HACS maintainers asked for the former duplicates here to go).
 
 Same design language as the other vlios.cz integrations -- a red wordmark with
 vlios.cz beneath -- but the shutter slats are replaced by the quantities this
@@ -21,7 +24,7 @@ RED = (226, 0, 26, 255)
 GREY = (154, 154, 154, 255)
 FONT_BOLD = r"C:\Windows\Fonts\ariblk.ttf"
 
-OUT = Path(__file__).parent
+OUT = Path(__file__).resolve().parents[1] / "custom_components" / "giom" / "brand"
 # Draw large, then downscale, so the edges come out smooth.
 SCALE = 4
 

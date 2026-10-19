@@ -232,16 +232,17 @@ custom_components/giom/     the integration
   config_flow.py            setup and options
   sensor.py                 entity descriptions
   brand/                    what HACS displays
-brands/                     icon sources + make_icons.py
+brands/                     make_icons.py, renders into the brand/ above
 tests/                      pytest suite, fixtures in tests/fixtures/
 tools/probe.py              standalone diagnostic, runs anywhere
 yaml-package/               the no-custom-component alternative
 docs/DEVELOPMENT.md         this file
 ```
 
-`brands/*.png` and `custom_components/giom/brand/*.png` are the same images.
-Re-run `python brands/make_icons.py` and copy them across after a design
-change; `brands/README.md` says so too.
+The PNGs live only in `custom_components/giom/brand/` — the copy HACS reads.
+`python brands/make_icons.py` renders straight into it after a design change.
+(The former duplicates in `brands/` were removed at the HACS maintainers'
+request when the repository entered the default store.)
 
 ---
 
@@ -304,8 +305,9 @@ sensor involved. The Illuminance sensor derives its value the same way.
 `lpd` looked like lux at low sun (53 vs 50.7) — it is not; it is the daily
 strike counter, now its own sensor.
 
-**HACS default submission** is done — [hacs/default#9780](https://github.com/hacs/default/pull/9780),
-awaiting a maintainer. No PR to home-assistant/brands was needed: the in-repo
+**In the HACS default store** since 2026-10-18 —
+[hacs/default#9780](https://github.com/hacs/default/pull/9780), merged by
+frenck. No PR to home-assistant/brands was needed: the in-repo
 `custom_components/giom/brand/` assets satisfy the HACS brand check.
 
 ### Releasing
